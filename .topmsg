@@ -1,0 +1,6 @@
+From: Tim Dysinger <tim@dysinger.net>
+Subject: [PATCH] t/accept-dynamic
+
+REST framework accepts any content type
+
+Signed-off-by: Tim Dysinger <tim@dysinger.net>
