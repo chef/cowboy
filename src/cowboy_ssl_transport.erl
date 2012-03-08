@@ -58,7 +58,6 @@ messages() -> {ssl, ssl_closed, ssl_error}.
 %% </dl>
 %%
 %% @see ssl:listen/2
-%% @todo The password option shouldn't be mandatory.
 -spec listen([{port, inet:ip_port()} | {certfile, string()}
 	| {keyfile, string()} | {password, string()}
 	| {cacertfile, string()} | {ip, inet:ip_address()}])
@@ -68,21 +67,30 @@ listen(Opts) ->
 	{port, Port} = lists:keyfind(port, 1, Opts),
 	Backlog = proplists:get_value(backlog, Opts, 1024),
 	{certfile, CertFile} = lists:keyfind(certfile, 1, Opts),
-	{keyfile, KeyFile} = lists:keyfind(keyfile, 1, Opts),
-	{password, Password} = lists:keyfind(password, 1, Opts),
+	KeyFileOpts =
+		case lists:keyfind(keyfile, 1, Opts) of
+			false -> [];
+			KeyFile -> [KeyFile]
+		end,
+	PasswordOpts =
+		case lists:keyfind(password, 1, Opts) of
+			false -> [];
+			Password -> [Password]
+		end,
 	ListenOpts0 = [binary, {active, false},
 		{backlog, Backlog}, {packet, raw}, {reuseaddr, true},
-		{certfile, CertFile}, {keyfile, KeyFile}, {password, Password}],
+		{certfile, CertFile}],
 	ListenOpts1 =
 		case lists:keyfind(ip, 1, Opts) of
 			false -> ListenOpts0;
 			Ip -> [Ip|ListenOpts0]
 		end,
-	ListenOpts =
+	ListenOpts2 =
 		case lists:keyfind(cacertfile, 1, Opts) of
 			false -> ListenOpts1;
 			CACertFile -> [CACertFile|ListenOpts1]
 		end,
+	ListenOpts = ListenOpts2 ++ KeyFileOpts ++ PasswordOpts,
 	ssl:listen(Port, ListenOpts).
 
 %% @doc Accept an incoming connection on a listen socket.
